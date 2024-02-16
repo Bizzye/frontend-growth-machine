@@ -1,36 +1,50 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
 
-## Getting Started
+# Front end Growth Machine
 
-First, run the development server:
+Desafio técnico proposto pela Growth Machine a fim de avaliar competência técnica.
+
+
+## Instalação
+
+#### No terminal: 
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+  git clone https://github.com/Bizzye/frontend-growth-machine.git
+  cd frontend-growth-machine
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+#### E execute uma das opções abaixo
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+  npm i
+  npm run dev
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+```bash
+  yarn
+  yarn dev 
+```
 
-## Learn More
+```bash
+  pnpm install
+  pnpm dev 
+```
+    
+## Funcionalidades
 
-To learn more about Next.js, take a look at the following resources:
+- [x] Cadastro de usuário
+- [x] Login
+- [x] Listagem de usuários
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Diferencias
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
+- [x] Tailwind
+- [x] React Hook Form e Zod
 
-## Deploy on Vercel
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Stack utilizada
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+**[Front-end](https://github.com/Bizzye/frontend-growth-machine.git):** React, NextJs, TailwindCSS, Shadcn UI, Typescript 
+
+**[Back-end](https://github.com/Bizzye/backend-growth-machine.git):** Node, Express, MongoDB, Typescript
+

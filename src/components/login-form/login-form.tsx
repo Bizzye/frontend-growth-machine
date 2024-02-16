@@ -12,7 +12,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { signIn } from "@/services/auth";
 import { zodResolver } from '@hookform/resolvers/zod';
 import Link from 'next/link';
-import { useRouter } from "next/navigation";
+import { redirect } from "next/navigation";
 
 const loginFormSchema = z.object({
   email: z.string().email('Preencha um e-mail válido'),
@@ -27,8 +27,6 @@ const loginFormSchema = z.object({
 type loginFormSchema = z.infer<typeof loginFormSchema>;
 
 export function LoginForm() {
-  const router = useRouter();
-
   const { toast } = useToast();
 
   const { register, handleSubmit, formState: { errors } } = useForm<loginFormSchema>({
@@ -40,14 +38,17 @@ export function LoginForm() {
 
     signIn(email, password)
     .then(() => {
-      router.push('/home');
+      redirect('/home');
     })
     .catch((err: any) => {
-      const { title, description } = err;
-      toast({
-        title,
-        description,
-      });
+      const { title, description, error } = err;
+      console.log(err)
+      if(error) {
+        toast({
+          title,
+          description,
+        });
+      }
     });
   }
 

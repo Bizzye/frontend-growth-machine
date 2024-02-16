@@ -2,9 +2,10 @@
 
 import Link from 'next/link';
 
-import { api } from '@/services/api';
+import { IUserRegister } from '@/interfaces/user.interface';
+import { signIn, signUp } from "@/services/auth";
 import { zodResolver } from '@hookform/resolvers/zod';
-import { signIn } from 'next-auth/react';
+import { redirect } from "next/navigation";
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { Button } from "../ui/button";
@@ -16,7 +17,7 @@ const registerFormSchema = z.object({
   email: z.string().email('Preencha um e-mail válido'),
   firstName: z.string().min(3, 'Nome deve ter pelo menos 3 caracteres.'),
   lastName: z.string().min(3, 'Sobrenome deve ter pelo menos 3 caracteres.'),
-  birthDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Data de nascimento inválida').optional(),
+  birthDate: z.string().optional(),
   password: z.string()
     .regex(/[A-Z]/, 'Senha deve conter 1 letra maiúscula')
     .regex(/[a-z]/, 'Senha deve conter 1 letra minúscula')
@@ -34,52 +35,28 @@ export function RegisterForm() {
     resolver: zodResolver(registerFormSchema)
   });
 
-  async function registerUser(dados: registerFormSchema) {
-    const { email, firstName, lastName, birthDate, password } = dados;
-    const obj = {
-      email: email,
-      firstName: firstName,
-      lastName: lastName,
-      birthDate: birthDate ? new Date(birthDate!) : null,
-      password: password
+  async function registerUser({ email, firstName, lastName, birthDate, password }: registerFormSchema) {
+    let obj: IUserRegister = {
+      email,
+      firstName,
+      lastName,
+      birthDate: birthDate ? new Date(birthDate!).toISOString() : '',
+      password
     }
 
-    let res: any;
-
     try {
-      res = await api.post('/users', obj);
-
-      await signIn('credentials', {
-        redirect: false,
-        email: email,
-        password: password,
-      });
-
+      await signUp(obj);
+      await signIn(email, password);
+      redirect('/home');
     } catch (error: any) {
-      let message = 'Erro inesperado';
-      if (error.response) {
-        const { data } = error.response;
-        message = data.message;
-      } else if (error.request) {
-        message = error.request;
-      } else {
-        message = 'Error ' + error.message;
-        message = 'Config ' + error.config;
-      }
+      const { title, description, error: err } = error;
 
-      
-      let title = 'Erro inesperado';
-      let description = 'Ocorreu um erro inesperado, tente novamente';
-        
-      if(message == 'User already exists') {
-        title = 'Usuário já cadastrado';
-        description = 'Usuário já cadastrado, verifique se o e-mail está correto';
+      if(err) {
+        toast({
+          title,
+          description,
+        });
       }
-
-      toast({
-        title,
-        description,
-      });
     }
   }
 
