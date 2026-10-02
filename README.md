@@ -4,113 +4,116 @@
 
 # Userz Growth
 
-User management app — sign up, sign in and browse registered users.<br/>
-Originally built as a technical challenge for **Growth Machine** (2024) and refactored in 2026 as a portfolio project.
+Aplicação de gestão de usuários — cadastro, login e listagem de usuários cadastrados.<br/>
+Criada originalmente como desafio técnico para a **Growth Machine** (2024) e refatorada em 2026 como projeto de portfólio.
 
 [![CI](https://github.com/Bizzye/frontend-growth-machine/actions/workflows/ci.yml/badge.svg)](https://github.com/Bizzye/frontend-growth-machine/actions/workflows/ci.yml)
 ![Next.js](https://img.shields.io/badge/next.js-16-000000?logo=nextdotjs&logoColor=white)
 ![React](https://img.shields.io/badge/react-19-61DAFB?logo=react&logoColor=black)
 ![TypeScript](https://img.shields.io/badge/typescript-6-3178C6?logo=typescript&logoColor=white)
 ![Tailwind CSS](https://img.shields.io/badge/tailwind-4-06B6D4?logo=tailwindcss&logoColor=white)
-![Tested with Vitest](https://img.shields.io/badge/tested%20with-vitest%20%2B%20playwright-6E9F18?logo=vitest&logoColor=white)
+![Testado com Vitest](https://img.shields.io/badge/testes-vitest%20%2B%20playwright-6E9F18?logo=vitest&logoColor=white)
 
-[Backend repository](https://github.com/Bizzye/backend-growth-machine) · [Code review](docs/CODE_REVIEW.md)
+[Repositório do backend](https://github.com/Bizzye/backend-growth-machine) · [Code review](docs/CODE_REVIEW.md)
 
-<img src="docs/screenshots/users.png" alt="Users dashboard" width="900" />
+<img src="docs/screenshots/users.png" alt="Painel de usuários" width="900" />
 
 </div>
 
-## Features
+## Funcionalidades
 
-- **Sign up** with client-side validation that mirrors the API rules (strong password, names, birth date not in the future).
-- **Sign in** with e-mail and password through NextAuth (credentials provider, JWT session).
-- **Users dashboard** listing everyone registered, with loading, empty and error states (with retry).
-- **Route protection** in the Next.js proxy: anonymous users can't reach `/home`; signed-in users skip `/login` and `/register`.
-- Friendly, non-revealing error messages (no user enumeration) shown as toasts.
-- Accessible forms (labels, `aria-invalid`, `aria-describedby`, autocomplete) and responsive dark UI.
+- **Cadastro** com validação no cliente espelhando as regras da API (senha forte, nomes, data de nascimento não futura).
+- **Login** com e-mail e senha via NextAuth (credentials provider, sessão JWT).
+- **Painel de usuários** com todos os cadastrados e estados de carregamento, vazio e erro (com "tentar novamente").
+- **Proteção de rotas** no proxy do Next.js: visitantes não acessam `/home`; usuários logados pulam `/login` e `/register`.
+- **Sessão consistente**: quando o token da API expira, o usuário é deslogado automaticamente em vez de ficar preso em erros 401.
+- Mensagens de erro amigáveis e que não revelam quais e-mails existem (sem _user enumeration_), exibidas em toasts.
+- Formulários acessíveis (labels, `aria-invalid`, `aria-describedby`, autocomplete) e interface escura responsiva.
+
+> A interface e o código estão em inglês para manter a codebase padronizada.
 
 ## Screenshots
 
-|                         Sign in                          |                    Sign up (validation)                    |
-| :------------------------------------------------------: | :--------------------------------------------------------: |
-|          ![Sign in](docs/screenshots/login.png)          |         ![Sign up](docs/screenshots/register.png)          |
-|                 **Invalid credentials**                  |                 **Client-side validation**                 |
-| ![Invalid credentials](docs/screenshots/login-error.png) | ![Login validation](docs/screenshots/login-validation.png) |
+|                           Login                            |                     Cadastro (validação)                     |
+| :--------------------------------------------------------: | :----------------------------------------------------------: |
+|            ![Login](docs/screenshots/login.png)            |          ![Cadastro](docs/screenshots/register.png)          |
+|                 **Credenciais inválidas**                  |                   **Validação no cliente**                   |
+| ![Credenciais inválidas](docs/screenshots/login-error.png) | ![Validação do login](docs/screenshots/login-validation.png) |
 
 <p align="center">
-  <img src="docs/screenshots/users-mobile.png" alt="Users dashboard on mobile" width="280" />
+  <img src="docs/screenshots/users-mobile.png" alt="Painel de usuários no celular" width="280" />
 </p>
 
-> Screenshots are generated automatically with Playwright: `npm run screenshots`.
+> Os screenshots são gerados automaticamente com Playwright: `npm run screenshots`.
 
-## Tech stack
+## Stack
 
-| Area         | Tools                                                                              |
-| ------------ | ---------------------------------------------------------------------------------- |
-| Framework    | Next.js 16 (App Router, proxy, route handlers), React 19, TypeScript 6             |
-| Styling      | Tailwind CSS 4, shadcn/ui (Radix primitives), lucide-react                         |
-| Data & forms | TanStack Query 5, React Hook Form 7, Zod 4, Axios (fetch adapter)                  |
-| Auth         | NextAuth 4 (credentials provider, encrypted JWT cookie)                            |
-| Quality      | ESLint 9 (flat config), Prettier, Husky + lint-staged, strict TypeScript           |
-| Tests        | Vitest + Testing Library + MSW (unit/integration), Playwright (E2E)                |
-| Delivery     | GitHub Actions (CI + CD to GHCR), Docker (standalone output, non-root), Dependabot |
+| Área          | Ferramentas                                                                                    |
+| ------------- | ---------------------------------------------------------------------------------------------- |
+| Framework     | Next.js 16 (App Router, proxy, route handlers), React 19, TypeScript 6                         |
+| Estilo        | Tailwind CSS 4, shadcn/ui (primitivos Radix), lucide-react                                     |
+| Dados e forms | TanStack Query 5, React Hook Form 7, Zod 4, Axios (adapter fetch)                              |
+| Autenticação  | NextAuth 4 (credentials provider, cookie JWT criptografado)                                    |
+| Qualidade     | ESLint 9 (flat config), Prettier, Husky + lint-staged, TypeScript estrito                      |
+| Testes        | Vitest + Testing Library + MSW (unitários/integração), Playwright (E2E)                        |
+| Entrega       | GitHub Actions (CI + CD para o GHCR), Docker (output standalone, usuário não-root), Dependabot |
 
-## Architecture
+## Arquitetura
 
 ```mermaid
 flowchart LR
   subgraph Browser
-    UI[React components] --> Q[TanStack Query hooks]
+    UI[Componentes React] --> Q[Hooks do TanStack Query]
     Q --> S[Services]
   end
-  subgraph Next.js server
-    NA[NextAuth route<br/>/api/auth/*]
-    BFF[BFF route<br/>/api/users]
-    P[proxy.ts<br/>route guard]
+  subgraph Servidor Next.js
+    NA[Rota NextAuth<br/>/api/auth/*]
+    BFF[Rota BFF<br/>/api/users]
+    P[proxy.ts<br/>guarda de rotas]
   end
-  S -- sign in --> NA
-  S -- list users --> BFF
-  S -- sign up --> API
-  NA -- POST /auth/login --> API[(Express API<br/>+ MongoDB)]
+  S -- login --> NA
+  S -- listar usuários --> BFF
+  S -- cadastro --> API
+  NA -- POST /auth/login --> API[(API Express<br/>+ MongoDB)]
   BFF -- GET /users + Bearer token --> API
 ```
 
-- **Feature-based structure** — each domain (`auth`, `users`) owns its components, hooks and schemas.
-- **Service layer** — components never call HTTP directly; services return typed data or throw an `AppError` with a user-facing message.
-- **Error mapping** — the API returns machine-readable codes (`INVALID_CREDENTIALS`, `USER_ALREADY_EXISTS`…) mapped to UI messages in one place (`src/lib/errors.ts`).
-- **Backend-for-frontend** — the API token is stored only in NextAuth's encrypted cookie. Protected data goes through a Next.js route handler that attaches the token server-side, so it is never exposed to browser JavaScript.
-- **Validated configuration** — environment variables are parsed with Zod (`src/config/env.ts`).
-- **Security headers** — `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`, HSTS; `X-Powered-By` disabled.
+- **Estrutura por feature** — cada domínio (`auth`, `users`) tem seus componentes, hooks e schemas.
+- **Camada de services** — componentes nunca fazem HTTP direto; services retornam dados tipados ou lançam um `AppError` com mensagem pronta para o usuário.
+- **Mapeamento de erros** — a API retorna códigos legíveis por máquina (`INVALID_CREDENTIALS`, `USER_ALREADY_EXISTS`…) traduzidos para mensagens de UI em um único lugar (`src/lib/errors.ts`).
+- **Backend-for-frontend (BFF)** — o token da API fica apenas no cookie criptografado do NextAuth. Dados protegidos passam por um route handler do Next.js que adiciona o token no servidor, então ele nunca chega ao JavaScript do navegador.
+- **Configuração validada** — variáveis de ambiente validadas com Zod (`src/config/env.ts`).
+- **Headers de segurança** — `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`, HSTS; `X-Powered-By` desativado.
 
 ```
 src/
-├── app/                     # Routes (App Router)
+├── app/                     # Rotas (App Router)
 │   ├── (auth)/login|register
-│   ├── home/                # Protected users dashboard
-│   └── api/                 # NextAuth + BFF route handlers
+│   ├── home/                # Painel de usuários (protegido)
+│   └── api/                 # Route handlers do NextAuth e do BFF
 ├── components/
 │   ├── layout/              # Header
-│   └── ui/                  # shadcn/ui primitives
+│   └── ui/                  # Primitivos do shadcn/ui
 ├── features/
-│   ├── auth/                # Forms, mutations (useLogin/useRegister), Zod schemas
-│   └── users/               # Users list/table, useUsers query
-├── services/                # HTTP clients, auth and users services
-├── lib/                     # NextAuth options, errors, formatters, query client
-├── config/env.ts            # Validated env vars
-├── types/                   # Domain types + NextAuth augmentation
-└── proxy.ts                 # Route guard (Next.js 16 proxy)
+│   ├── auth/                # Formulários, mutations (useLogin/useRegister), schemas Zod
+│   └── users/               # Lista/tabela de usuários, query useUsers
+├── services/                # Clientes HTTP e services de auth e users
+├── lib/                     # Opções do NextAuth, sessão, erros, formatadores, query client
+├── config/env.ts            # Variáveis de ambiente validadas
+├── types/                   # Tipos de domínio + augmentation do NextAuth
+└── proxy.ts                 # Guarda de rotas (proxy do Next.js 16)
 tests/
 ├── unit/                    # Vitest + Testing Library + MSW
-├── e2e/                     # Playwright specs + in-memory mock of the API
-├── fixtures/                # Shared test data
-└── mocks/                   # MSW handlers
+├── e2e/                     # Specs do Playwright + mock em memória da API
+├── fixtures/                # Dados de teste compartilhados
+└── mocks/                   # Handlers do MSW
 ```
 
-## Getting started
+## Como rodar
 
-### Full stack with Docker (recommended)
+### Stack completa com Docker (recomendado)
 
-Clone both repositories side by side and start everything (MongoDB + API + frontend):
+Clone os dois repositórios lado a lado e suba tudo (MongoDB + API + frontend):
 
 ```bash
 git clone https://github.com/Bizzye/frontend-growth-machine.git
@@ -118,14 +121,14 @@ git clone https://github.com/Bizzye/backend-growth-machine.git
 cd frontend-growth-machine
 
 docker compose up --build -d
-docker compose exec backend node dist/scripts/seed.js   # optional demo users
+docker compose exec backend node dist/scripts/seed.js   # opcional: usuários de demonstração
 ```
 
-Open <http://localhost:3000> and sign in with `jane.cooper@example.com` / `Str0ng!Pass` (after seeding).
+Acesse <http://localhost:3000> e entre com `jane.cooper@example.com` / `Str0ng!Pass` (após o seed).
 
-### Frontend only
+### Apenas o frontend
 
-Requirements: Node.js 24 (see `.nvmrc`) and the [API](https://github.com/Bizzye/backend-growth-machine) running.
+Requisitos: Node.js 24 (veja `.nvmrc`) e a [API](https://github.com/Bizzye/backend-growth-machine) rodando.
 
 ```bash
 cp .env.example .env.local
@@ -133,49 +136,49 @@ npm install
 npm run dev
 ```
 
-No backend at hand? Run the in-memory mock API instead:
+Sem backend por perto? Use a API mock em memória:
 
 ```bash
 npm run mock:api                                         # http://localhost:4010/api
 NEXT_PUBLIC_API_URL=http://localhost:4010/api npm run dev
 ```
 
-### Environment variables
+### Variáveis de ambiente
 
-| Variable              | Description                                                        | Default                     |
-| --------------------- | ------------------------------------------------------------------ | --------------------------- |
-| `NEXT_PUBLIC_API_URL` | API URL used by the browser (inlined at build time)                | `http://localhost:3333/api` |
-| `API_URL`             | API URL used by the Next.js server (e.g. Docker network hostname)  | `NEXT_PUBLIC_API_URL`       |
-| `NEXTAUTH_URL`        | Public URL of this app                                             | —                           |
-| `NEXTAUTH_SECRET`     | Secret used to encrypt the session cookie (required in production) | —                           |
+| Variável              | Descrição                                                             | Padrão                      |
+| --------------------- | --------------------------------------------------------------------- | --------------------------- |
+| `NEXT_PUBLIC_API_URL` | URL da API usada pelo navegador (embutida no build)                   | `http://localhost:3333/api` |
+| `API_URL`             | URL da API usada pelo servidor Next.js (ex.: hostname da rede Docker) | `NEXT_PUBLIC_API_URL`       |
+| `NEXTAUTH_URL`        | URL pública desta aplicação                                           | —                           |
+| `NEXTAUTH_SECRET`     | Segredo que criptografa o cookie de sessão (obrigatório em produção)  | —                           |
 
 ## Scripts
 
-| Script                  | Description                                         |
-| ----------------------- | --------------------------------------------------- |
-| `npm run dev`           | Development server                                  |
-| `npm run build`         | Production build (standalone output)                |
-| `npm test`              | Unit/integration tests (Vitest)                     |
-| `npm run test:coverage` | Tests with coverage report and thresholds           |
-| `npm run test:e2e`      | E2E tests (Playwright, production build + mock API) |
-| `npm run screenshots`   | Regenerates the README screenshots                  |
-| `npm run mock:api`      | In-memory implementation of the API contract        |
-| `npm run lint`          | ESLint                                              |
-| `npm run format`        | Prettier                                            |
-| `npm run typecheck`     | TypeScript                                          |
-| `npm run validate`      | Format check + lint + typecheck + unit tests        |
+| Script                  | Descrição                                             |
+| ----------------------- | ----------------------------------------------------- |
+| `npm run dev`           | Servidor de desenvolvimento                           |
+| `npm run build`         | Build de produção (output standalone)                 |
+| `npm test`              | Testes unitários/integração (Vitest)                  |
+| `npm run test:coverage` | Testes com relatório de cobertura e thresholds        |
+| `npm run test:e2e`      | Testes E2E (Playwright, build de produção + API mock) |
+| `npm run screenshots`   | Gera novamente os screenshots do README               |
+| `npm run mock:api`      | Implementação em memória do contrato da API           |
+| `npm run lint`          | ESLint                                                |
+| `npm run format`        | Prettier                                              |
+| `npm run typecheck`     | TypeScript                                            |
+| `npm run validate`      | Format check + lint + typecheck + testes unitários    |
 
-## Testing strategy
+## Estratégia de testes
 
-- **Unit / integration (Vitest)** — schemas, error mapping, formatters, services (HTTP mocked with MSW), components rendered with Testing Library (forms, states, accessibility), the BFF route handler and the proxy. ~99% coverage with enforced thresholds.
-- **End-to-end (Playwright)** — real browser against a production build: route protection, sign in/out, sign up, duplicated e-mail, users listing, security headers. The backend is replaced by a small in-memory server that implements the same contract (`tests/e2e/mock-api`), so E2E runs anywhere, including CI, without MongoDB. The same suite also runs against the real Docker stack: `E2E_BASE_URL=http://localhost:3000 npm run test:e2e` (after seeding).
+- **Unitários / integração (Vitest)** — schemas, mapeamento de erros, formatadores, sessão, services (HTTP mockado com MSW), componentes renderizados com Testing Library (formulários, estados, acessibilidade), o route handler do BFF e o proxy. ~99% de cobertura com thresholds obrigatórios.
+- **End-to-end (Playwright)** — navegador real contra um build de produção: proteção de rotas, login/logout, cadastro, e-mail duplicado, listagem e headers de segurança. O backend é substituído por um pequeno servidor em memória que implementa o mesmo contrato (`tests/e2e/mock-api`), então o E2E roda em qualquer lugar, inclusive no CI, sem MongoDB. A mesma suíte também roda contra a stack real no Docker: `E2E_BASE_URL=http://localhost:3000 npm run test:e2e` (após o seed).
 
 ## CI/CD
 
-- **CI** (`.github/workflows/ci.yml`) — on every push/PR: format check, lint, typecheck, unit tests with coverage, E2E tests (report uploaded on failure) and a Docker build.
-- **CD** (`.github/workflows/release.yml`) — after CI passes on `main` (and on `v*.*.*` tags) a production image is published to `ghcr.io/bizzye/frontend-growth-machine`. Set the repository variable `NEXT_PUBLIC_API_URL` to bake the public API URL into the image.
-- **Dependabot** keeps npm packages and GitHub Actions up to date.
+- **CI** (`.github/workflows/ci.yml`) — a cada push/PR: format check, lint, typecheck, testes unitários com cobertura, testes E2E (relatório anexado em caso de falha, com cache do build do Next e dos browsers) e build da imagem Docker.
+- **CD** (`.github/workflows/release.yml`) — depois que o CI passa na `main` (e em tags `v*.*.*`) a imagem de produção é publicada em `ghcr.io/bizzye/frontend-growth-machine`. Defina a variável de repositório `NEXT_PUBLIC_API_URL` para embutir a URL pública da API na imagem.
+- **Dependabot** mantém os pacotes npm e as GitHub Actions atualizados.
 
-## License
+## Licença
 
 MIT

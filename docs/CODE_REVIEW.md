@@ -64,3 +64,12 @@ Severity: 🔴 bug / security · 🟠 maintainability / architecture · 🟡 sty
 - **Vitest + Testing Library + MSW** unit/integration tests with coverage thresholds.
 - **Playwright** E2E tests against a production build and an in-memory mock of the backend contract.
 - **GitHub Actions**: CI (quality, unit, e2e, docker build) and CD (image published to GHCR); Dependabot.
+
+## Follow-up review (PR #1)
+
+| #   | Severity | Finding                                                                                                                                                     | Fix                                                                                                                                                                    |
+| --- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| R1  | 🔴       | The NextAuth session is rolling, but the API token has a fixed lifetime: a user could stay "signed in" with an expired token and get 401s on every request. | The token expiry is stored in the session; the proxy and the BFF treat expired tokens as anonymous, and React Query signs the user out on `UNAUTHORIZED` (no retries). |
+| R2  | 🟡       | A new server-side HTTP client was created (and env vars re-parsed) on every request.                                                                        | Single lazily created client (`getServerApiClient`).                                                                                                                   |
+| R3  | 🟡       | `as { accessToken?: string }` cast in the `jwt` callback.                                                                                                   | NextAuth `User` augmented with the token fields.                                                                                                                       |
+| R4  | 🟡       | E2E job rebuilt Next.js from scratch and downloaded browsers on every run.                                                                                  | Cached `.next/cache` and Playwright browsers.                                                                                                                          |
