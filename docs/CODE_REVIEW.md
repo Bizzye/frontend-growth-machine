@@ -1,0 +1,66 @@
+# Code Review — portfolio refresh
+
+Review of the original technical-test code (Feb/2024, commit `f2efea4`) and what was changed to bring it up to current best practices. Each item lists the problem, why it matters and the fix.
+
+Severity: 🔴 bug / security · 🟠 maintainability / architecture · 🟡 style / DX
+
+## Security
+
+| #   | Severity | Finding                                                                                                                                                                    | Fix                                                                                                                                                                                                                                                               |
+| --- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| S1  | 🔴       | `console.log('session', session)` on the home page and `console.log(res)` / `console.log(err)` in the auth flow leaked session and error payloads to the browser console.  | Removed. ESLint `no-console` rule now flags new occurrences.                                                                                                                                                                                                      |
+| S2  | 🔴       | Distinct messages for "User not found" and "Invalid password" allowed **user enumeration** (discovering which e-mails are registered).                                     | The API now returns a single `401 INVALID_CREDENTIALS` and the UI shows one generic message (`src/lib/errors.ts`).                                                                                                                                                |
+| S3  | 🔴       | The NextAuth `authorize` returned the raw backend payload (including the API JWT) as the user object, and the users list called a public endpoint that exposed every user. | `authorize` returns only `id`, `email` and `name`; the API token lives in the encrypted session cookie. The list goes through a **BFF route handler** (`src/app/api/users/route.ts`) that attaches the token server-side, so it never reaches browser JavaScript. |
+| S4  | 🔴       | API URL hard-coded to `http://localhost:3333/api`; no `.env.example`; `.env` not git-ignored.                                                                              | Validated env module (`src/config/env.ts`, Zod), `.env.example`, `.env` added to `.gitignore`, separate server-side `API_URL` for internal networks.                                                                                                              |
+| S5  | 🟠       | No security headers; `X-Powered-By` exposed.                                                                                                                               | `next.config.ts` sends `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`, HSTS and disables `poweredByHeader`. Covered by an E2E test.                                                                                         |
+| S6  | 🟠       | Password rules were also applied to the **login** form, leaking the password policy and blocking legacy passwords.                                                         | Login only requires a non-empty password; the strong policy lives in `passwordSchema` and is used by sign up only.                                                                                                                                                |
+| S7  | 🟡       | Docker image would run as root.                                                                                                                                            | Multi-stage `Dockerfile` with Next.js standalone output running as a non-root user, plus a healthcheck.                                                                                                                                                           |
+
+> The backend was refactored alongside (see its own `docs/CODE_REVIEW.md`). Critical there: MongoDB credentials and the JWT secret had been committed — they were removed from the code and **must be rotated**.
+
+## Bugs
+
+| #   | Severity | Finding                                                                                                                                                                                                         | Fix                                                                                                                                                                  |
+| --- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| B1  | 🔴       | `redirect('/home')` called inside a promise callback of an event handler. `redirect` only works during render / server code — in a handler it throws `NEXT_REDIRECT`, which was then swallowed by the `.catch`. | Mutations (`useLogin` / `useRegister`) use `router.replace('/home')` on success.                                                                                     |
+| B2  | 🔴       | Birth dates (stored at `00:00 UTC`) were formatted in the local timezone, showing **the previous day** for users in Brazil (UTC-3).                                                                             | `formatDate` formats with `timeZone: "UTC"` (`src/lib/format.ts`), unit-tested.                                                                                      |
+| B3  | 🔴       | Each table row was wrapped in its own `<tbody>` (invalid table structure, broken styles for the last row).                                                                                                      | A single `<TableBody>`; covered by a unit test.                                                                                                                      |
+| B4  | 🟠       | `RootLayout` declared a `session: any` prop that Next.js never passes.                                                                                                                                          | Removed.                                                                                                                                                             |
+| B5  | 🟠       | In `authorize`, `message = error.request` assigned an object to a string, and the following line overwrote the previous message.                                                                                | Rewritten: the backend error code is extracted by `getApiErrorCode` and forwarded as the error message.                                                              |
+| B6  | 🟠       | `/` rendered "Hellow world!"; logged-in users could still open `/login`; protection relied on client-side `useSession` + `redirect` (flash of content).                                                         | `/` redirects to `/home`; the route guard runs in `src/proxy.ts` (Next 16 proxy) for both directions, using `getToken` directly (`withAuth` skips the sign-in page). |
+| B7  | 🟡       | Login only showed one validation error at a time and ignored the `error` prop already supported by `Input`.                                                                                                     | Both forms use field-level errors consistently.                                                                                                                      |
+| B8  | 🟡       | `QueryClient` created at module scope (shared between requests during SSR).                                                                                                                                     | Created once per browser session with `useState(createQueryClient)`.                                                                                                 |
+
+## Architecture & patterns
+
+| #   | Severity | Finding                                                                                                                                          | Fix                                                                                                                                                |
+| --- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| A1  | 🟠       | Services wrapped `async` functions in `new Promise(async (resolve, reject) => …)` (Promise constructor anti-pattern) and rejected plain objects. | Plain `async` functions grouped in service objects (`authService`, `usersService`) that throw a typed `AppError`.                                  |
+| A2  | 🟠       | Error mapping duplicated as `if (error == '...')` chains in three places (loose equality), keyed on human-readable messages.                     | The API now sends machine-readable `code`s; a single lookup table + `AppError.fromCode` maps them to UI messages (`src/lib/errors.ts`).            |
+| A3  | 🟠       | Password/e-mail Zod rules duplicated in both forms.                                                                                              | Shared schemas in `src/features/auth/schemas.ts`.                                                                                                  |
+| A4  | 🟠       | Mixed Pages Router (`pages/api/auth`) and App Router.                                                                                            | NextAuth moved to an App Router route handler (`src/app/api/auth/[...nextauth]/route.ts`).                                                         |
+| A5  | 🟠       | Flat `components/` mixing domain and UI code; `interfaces/` with `I`-prefixed names and odd types such as `Omit<IUser, ''>`.                     | Feature-based structure (`features/auth`, `features/users`), shared `components/ui` (shadcn) and `components/layout`, domain types in `src/types`. |
+| A6  | 🟠       | No loading / error / empty states on the users list.                                                                                             | `UsersList` handles all states with retry; data fetching isolated in the `useUsers` hook with query-key factory.                                   |
+| A7  | 🟡       | Unused dependencies (`react-router-dom`, `dotenv`, `react-icons`) and unused components (`alert`, `pagination`, Next.js SVGs).                   | Removed; icons standardised on `lucide-react`.                                                                                                     |
+| A8  | 🟡       | Commented-out code blocks.                                                                                                                       | Removed.                                                                                                                                           |
+
+## Naming & consistency
+
+- Mixed Portuguese/English identifiers (`dados`, `deslogar`, `obj`, `UsuarioModel`, `nxSignIn`) → **English everywhere**, including UI copy, for a consistent codebase and a wider audience.
+- Types used the same name as values (`type loginFormSchema = z.infer<typeof loginFormSchema>`) → `loginSchema` / `LoginFormValues`.
+- File names follow `kebab-case`, components `PascalCase`, hooks `useX`, services `*.service.ts`.
+
+## Accessibility
+
+- Inputs expose `aria-invalid` and `aria-describedby` linked to the error message.
+- Correct `type="email"` and `autoComplete` attributes (password managers).
+- `role="status"` / `role="alert"` for loading and error states; decorative icons are `aria-hidden`.
+- `<html lang>` matches the UI language; links rendered with `Button asChild` instead of `<a>` nested inside `<button>`.
+
+## Tooling added
+
+- **Prettier** (+ Tailwind class sorting), **ESLint 9 flat config** (Next core-web-vitals, typescript-eslint, TanStack Query plugin, Prettier compat), `.editorconfig`, `.gitattributes`.
+- **Husky + lint-staged** pre-commit hook.
+- **Vitest + Testing Library + MSW** unit/integration tests with coverage thresholds.
+- **Playwright** E2E tests against a production build and an in-memory mock of the backend contract.
+- **GitHub Actions**: CI (quality, unit, e2e, docker build) and CD (image published to GHCR); Dependabot.
