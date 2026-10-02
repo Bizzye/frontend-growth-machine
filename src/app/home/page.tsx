@@ -1,32 +1,26 @@
-"use client"
+import type { Metadata } from "next";
 
-import { Header } from "@/components/header/header";
-import { UserTable } from "@/components/table/user-table";
-import { getUsers } from "@/services/users";
-import { useQuery } from "@tanstack/react-query";
-import { useSession } from "next-auth/react";
+import { Header } from "@/components/layout/header";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { UsersList } from "@/features/users/components/users-list";
 
-export default function Home() {
-  const { data: session } = useSession();
+export const metadata: Metadata = { title: "Users" };
 
-  if(session) {
-    console.log('session', session);
-  }
-
-  const { data: users,  } = useQuery({
-    queryKey: ["users"],
-    queryFn: getUsers
-  });
-  
+export default function HomePage() {
   return (
-    <main className="min-h-screen max-h-screen">
+    <>
       <Header />
-      <div className="flex flex-col items-center p-24">
-        <h1 className="text-2xl font-bold mb-8">Usuários</h1>
-        { 
-          users && <UserTable dados={users}/>
-        }
-      </div>
-    </main>
+      <main className="container py-10">
+        <Card>
+          <CardHeader>
+            <CardTitle>Users</CardTitle>
+            <CardDescription>Everyone who has signed up to the platform.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <UsersList />
+          </CardContent>
+        </Card>
+      </main>
+    </>
   );
 }
