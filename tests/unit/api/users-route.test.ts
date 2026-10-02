@@ -23,6 +23,15 @@ describe("GET /api/users (BFF)", () => {
     expect(response.status).toBe(401);
   });
 
+  it("returns 401 when the API token inside the session has expired", async () => {
+    getTokenMock.mockResolvedValue({ accessToken: "api-token", accessTokenExpires: Date.now() - 1000 });
+
+    const response = await GET(request());
+
+    expect(response.status).toBe(401);
+    expect(await response.json()).toMatchObject({ code: "UNAUTHORIZED" });
+  });
+
   it("forwards the request to the backend with the user's API token", async () => {
     getTokenMock.mockResolvedValue({ accessToken: "api-token" });
     let authorization: string | null = null;

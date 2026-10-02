@@ -9,7 +9,7 @@ vi.mock("next-auth/jwt", () => ({ getToken: vi.fn() }));
 const getTokenMock = vi.mocked(getToken);
 
 async function navigate(path: string, authenticated: boolean) {
-  getTokenMock.mockResolvedValue(authenticated ? { sub: "user-1" } : null);
+  getTokenMock.mockResolvedValue(authenticated ? { sub: "user-1", accessToken: "api-token" } : null);
   return proxy(new NextRequest(`http://localhost:3000${path}`));
 }
 
@@ -27,6 +27,17 @@ describe("proxy (route guard)", () => {
     const response = await navigate(path, true);
 
     expect(redirectTarget(response)).toBe("http://localhost:3000/home");
+  });
+
+  it("treats a session with an expired API token as anonymous", async () => {
+    getTokenMock.mockResolvedValue({ accessToken: "api-token", accessTokenExpires: Date.now() - 1000 });
+
+    const fromHome = await proxy(new NextRequest("http://localhost:3000/home"));
+    expect(redirectTarget(fromHome)).toBe("http://localhost:3000/login");
+
+    // …and can reach the login page instead of bouncing back to /home.
+    const fromLogin = await proxy(new NextRequest("http://localhost:3000/login"));
+    expect(redirectTarget(fromLogin)).toBeNull();
   });
 
   it.each([

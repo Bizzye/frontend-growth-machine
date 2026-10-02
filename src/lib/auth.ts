@@ -1,9 +1,9 @@
 import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 
-import { getServerApiUrl } from "@/config/env";
 import { getApiErrorCode } from "@/lib/errors";
-import { createHttpClient } from "@/services/http-client";
+import { getTokenExpiry } from "@/lib/session";
+import { getServerApiClient } from "@/services/http-client";
 import type { LoginResponse } from "@/types/user";
 
 const UNEXPECTED_ERROR_CODE = "UnexpectedError";
@@ -20,8 +20,7 @@ export const authOptions: NextAuthOptions = {
         if (!credentials?.email || !credentials.password) return null;
 
         try {
-          const api = createHttpClient(getServerApiUrl());
-          const { data } = await api.post<LoginResponse>("/auth/login", {
+          const { data } = await getServerApiClient().post<LoginResponse>("/auth/login", {
             email: credentials.email,
             password: credentials.password,
           });
@@ -33,6 +32,7 @@ export const authOptions: NextAuthOptions = {
             email: user.email,
             name: `${user.firstName} ${user.lastName}`.trim(),
             accessToken: token,
+            accessTokenExpires: getTokenExpiry(token),
           };
         } catch (error) {
           // The message is forwarded to the client as `signIn().error` and mapped to a
@@ -42,7 +42,8 @@ export const authOptions: NextAuthOptions = {
       },
     }),
   ],
-  // Matches the backend JWT lifetime (JWT_EXPIRES_IN=1d) so both expire together.
+  // Same as the backend default (JWT_EXPIRES_IN=1d). The session is rolling, so the API token
+  // expiry is also checked by `hasValidApiToken` in the proxy and the BFF.
   session: { strategy: "jwt", maxAge: 60 * 60 * 24 },
   pages: { signIn: "/login" },
   callbacks: {
@@ -50,7 +51,8 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         token.id = user.id;
         // Kept inside the encrypted session cookie only; never exposed to the browser.
-        token.accessToken = (user as { accessToken?: string }).accessToken;
+        token.accessToken = user.accessToken;
+        token.accessTokenExpires = user.accessTokenExpires;
       }
       return token;
     },

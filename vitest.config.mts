@@ -21,13 +21,7 @@ export default defineConfig({
       provider: "v8",
       reporter: ["text", "html", "lcov"],
       include: ["src/**/*.{ts,tsx}"],
-      exclude: [
-        "src/app/**/*.tsx",
-        "src/components/ui/**",
-        "src/types/**",
-        "src/lib/auth.ts",
-        "src/lib/query-client.ts",
-      ],
+      exclude: ["src/app/**/*.tsx", "src/components/ui/**", "src/types/**", "src/lib/auth.ts"],
       thresholds: {
         lines: 90,
         functions: 90,

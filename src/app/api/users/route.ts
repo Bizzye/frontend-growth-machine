@@ -2,9 +2,9 @@ import { isAxiosError } from "axios";
 import { type NextRequest, NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
 
-import { getServerApiUrl } from "@/config/env";
 import { getApiErrorCode } from "@/lib/errors";
-import { createHttpClient } from "@/services/http-client";
+import { hasValidApiToken } from "@/lib/session";
+import { getServerApiClient } from "@/services/http-client";
 import type { User } from "@/types/user";
 
 /**
@@ -14,13 +14,12 @@ import type { User } from "@/types/user";
 export async function GET(request: NextRequest) {
   const token = await getToken({ req: request });
 
-  if (!token?.accessToken) {
+  if (!hasValidApiToken(token)) {
     return NextResponse.json({ code: "UNAUTHORIZED", message: "Authentication required" }, { status: 401 });
   }
 
   try {
-    const api = createHttpClient(getServerApiUrl());
-    const { data } = await api.get<User[]>("/users", {
+    const { data } = await getServerApiClient().get<User[]>("/users", {
       headers: { Authorization: `Bearer ${token.accessToken}` },
     });
 

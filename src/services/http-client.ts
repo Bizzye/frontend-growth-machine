@@ -1,6 +1,6 @@
-import axios from "axios";
+import axios, { type AxiosInstance } from "axios";
 
-import { publicEnv } from "@/config/env";
+import { getServerApiUrl, publicEnv } from "@/config/env";
 
 export function createHttpClient(baseURL: string) {
   return axios.create({
@@ -22,3 +22,11 @@ export const apiClient = createHttpClient(publicEnv.NEXT_PUBLIC_API_URL);
 export const bffClient = createHttpClient(
   typeof window === "undefined" ? "/api" : new URL("/api", window.location.origin).toString(),
 );
+
+let serverApiClient: AxiosInstance | undefined;
+
+/** Next.js server → backend API (NextAuth, BFF). Created once, on first use. */
+export function getServerApiClient(): AxiosInstance {
+  serverApiClient ??= createHttpClient(getServerApiUrl());
+  return serverApiClient;
+}
