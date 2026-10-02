@@ -8,7 +8,7 @@ Aplicação de gestão de usuários — cadastro, login e listagem de usuários 
 Criada originalmente como desafio técnico para a **Growth Machine** (2024) e refatorada em 2026 como projeto de portfólio.
 
 [![CI](https://github.com/Bizzye/frontend-growth-machine/actions/workflows/ci.yml/badge.svg)](https://github.com/Bizzye/frontend-growth-machine/actions/workflows/ci.yml)
-![Next.js](https://img.shields.io/badge/next.js-16-000000?logo=nextdotjs&logoColor=white)
+![Next.js](https://img.shields.io/badge/nextjs-16-000000?logo=nextdotjs&logoColor=white)
 ![React](https://img.shields.io/badge/react-19-61DAFB?logo=react&logoColor=black)
 ![TypeScript](https://img.shields.io/badge/typescript-6-3178C6?logo=typescript&logoColor=white)
 ![Tailwind CSS](https://img.shields.io/badge/tailwind-4-06B6D4?logo=tailwindcss&logoColor=white)
